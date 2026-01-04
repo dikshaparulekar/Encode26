@@ -29,7 +29,7 @@ app.add_middleware(
 
 # Initialize Gemini - USE CORRECT MODEL
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel('gemini-1.5-flash')  # Changed to working model
+model = genai.GenerativeModel('gemini-1.5-pro-latest')
 
 # All 6 personas from Lovable prompt
 PERSONAS = [
@@ -335,3 +335,4 @@ def health_check():
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
