@@ -2,9 +2,10 @@ fastapi==0.104.1
 google-generativeai==0.3.2
 uvicorn[standard]==0.24.0
 python-multipart==0.0.6
-pillow==10.2.0  # ← CHANGED
+# pillow==10.2.0  # ← CHANGED
 pydantic==2.5.0
 requests==2.31.0
 python-dotenv==1.0.0
 cryptography==42.0.8
 packaging==24.0
+
