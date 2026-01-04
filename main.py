@@ -339,8 +339,18 @@ def get_mock_analysis(persona: dict) -> dict:
 def health_check():
     return {"status": "healthy", "features": "All 5 features active"}
 
+@app.get("/available-models")
+def available_models():
+    try:
+        models = genai.list_models()
+        model_names = [m.name for m in models]
+        return {"models": model_names}
+    except Exception as e:
+        return {"error": str(e)}
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
 
 
 
