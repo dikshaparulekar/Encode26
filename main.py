@@ -131,10 +131,6 @@ def create_custom_profile(
     }
     return custom_persona
 
-# Add this import at the TOP of your main.py (with other imports):
-from google.cloud import vision
-import os
-
 # Replace your current extract_text_from_image function (around line 85):
 def extract_text_from_image(image_bytes: bytes) -> str:
     """FEATURE 2: Real Image to Text with Google Vision API"""
@@ -362,6 +358,7 @@ def available_models():
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
 
 
 
