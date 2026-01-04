@@ -29,7 +29,7 @@ app.add_middleware(
 
 # Initialize Gemini - USE CORRECT MODEL
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel('models/gemini-pro') 
+model = genai.GenerativeModel('gemini-1.5-flash')  
 
 # All 6 personas from Lovable prompt
 PERSONAS = [
@@ -134,7 +134,7 @@ def extract_text_from_image(image_bytes: bytes) -> str:
     """FEATURE 2: Image to Text Extraction - WORKING VERSION"""
     try:
         # Use gemini-1.5-flash for images (works for everyone)
-        vision_model = genai.GenerativeModel('models/gemini-pro-vision') 
+        vision_model = genai.GenerativeModel('gemini-1.5-flash') 
         
         image = Image.open(io.BytesIO(image_bytes))
         response = vision_model.generate_content([
@@ -341,6 +341,7 @@ def health_check():
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
 
 
 
