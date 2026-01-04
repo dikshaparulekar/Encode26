@@ -8,7 +8,8 @@ requests==2.31.0
 python-dotenv==1.0.0
 cryptography==42.0.8
 packaging==24.0
-google-cloud-vision==3.7.1
+#google-cloud-vision==3.7.1
+
 
 
 
