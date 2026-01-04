@@ -30,7 +30,7 @@ app.add_middleware(
 
 # Initialize Gemini - USE CORRECT MODEL
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel('gemini-1.5-flash')  
+model = genai.GenerativeModel('gemini-pro')  
 
 # All 6 personas from Lovable prompt
 PERSONAS = [
@@ -192,71 +192,40 @@ def extract_text_from_image(image_bytes: bytes) -> str:
         print(f"DEBUG: Vision API failed: {str(e)}")
         # Fallback to mock
         return "water, sugar, citric acid, natural flavors, preservatives, sodium benzoate"
+        
 def analyze_with_gemini(ingredients: str, persona: dict) -> dict:
-    """FEATURE 3: Core AI Analysis with Personalized Buckets"""
-    
-    prompt = f"""
-    You are a Personalized Bio-Auditor. Analyze these food ingredients for a user with specific health profile.
-
-    USER PROFILE:
-    Name: {persona['name']}
-    Goals: {', '.join(persona['goals'])}
-    Avoid: {', '.join(persona['avoid'])}
-    Allergies: {', '.join(persona.get('allergies', []))}
-
-    INGREDIENTS TO ANALYZE:
-    {ingredients}
-
-    Analyze EACH ingredient and categorize into 3 buckets:
-    1. 🟢 FUEL: Ingredients that support user's specific health goals
-    2. 🟡 FILLER: Processing aids with no nutritional value (neutral)
-    3. 🔴 RISK: Ingredients that conflict with user profile or are harmful
-
-    Return STRICT JSON format:
-    {{
-        "personal_match": 0-100,
-        "quality_score": 0-100,
-        "fuel_percent": 0-100,
-        "filler_percent": 0-100,
-        "risk_percent": 0-100,
-        "conflicts": ["list of specific conflicts with user profile"],
-        "deceptions": ["list of vague/ambiguous terms found"],
-        "ingredients": [
-            {{
-                "name": "ingredient name",
-                "bucket": "fuel/filler/risk",
-                "impact": "one-line impact for THIS user",
-                "confidence": 0-100,
-                "explanation": "detailed explanation why it's good/bad for THIS user"
-            }}
-        ]
-    }}
-
-    Important:
-    - Calculate personal_match based on how well ingredients match user profile
-    - Flag vague terms like 'natural flavors', 'spices', 'flavorings' in deceptions
-    - Include confidence scores for uncertainty
-    - Be specific to user's profile in explanations
-    """
-    
+    """FEATURE 3: Core AI Analysis - Use gemini-pro"""
     try:
+        print(f"DEBUG: Analyzing with gemini-pro, ingredients length: {len(ingredients)}")
+        
+        prompt = f"""Analyze these ingredients for {persona['name']}:
+        
+        Ingredients: {ingredients}
+        
+        User Profile: {persona}
+        
+        Return JSON with: personal_match (0-100), quality_score (0-100), 
+        fuel_percent, filler_percent, risk_percent (all 0-100),
+        conflicts list, deceptions list, and ingredients array with name, bucket, impact, confidence, explanation.
+        """
+        
         response = model.generate_content(prompt)
+        print(f"DEBUG: Gemini response received: {response.text[:200]}...")
+        
         # Extract JSON from response
         import re
         json_match = re.search(r'\{.*\}', response.text, re.DOTALL)
         if json_match:
             result = json.loads(json_match.group())
-            # Add persona info
             result["persona_used"] = persona["name"]
-            result["ingredients_analyzed"] = len(result.get("ingredients", []))
             return result
         else:
-            raise ValueError("No JSON found in response")
+            print("DEBUG: No JSON found in response")
+            return get_mock_analysis(persona)
+            
     except Exception as e:
-        print(f"Gemini analysis error: {str(e)}")
-        # Return mock data if API fails
+        print(f"DEBUG: Gemini error: {str(e)}")
         return get_mock_analysis(persona)
-
 @app.post("/analyze")
 async def analyze_label(
     profile_id: str = Form(...),
@@ -393,6 +362,7 @@ def available_models():
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
 
 
 
