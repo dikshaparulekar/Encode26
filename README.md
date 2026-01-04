@@ -15,25 +15,26 @@
 ## 🏗️ **Architecture**
 ```
 ### 📊 Data Flow Diagram
-┌─────────┐ POST /analyze ┌─────────┐ Vision API ┌─────────┐
-│ User │ ──────────────────▶ │ Backend │ ───────────────▶ │ Google │
-│ │ │ │ │ Vision │
-│ Browser │ ◀───────────────── │ FastAPI │ ◀────────────── │ API │
-└─────────┘ JSON Response │ Railway │ Extracted └─────────┘
-│ Text
+User Browser
 │
-│ Gemini AI ┌─────────┐
-└─────────────────▶ │ Google │
-│ Gemini │
-│ AI │
-Analysis Results │ │
-◀───────────────── │ │
-└─────────┘
-
-yaml
-Copy code
-
-```
+▼
+Frontend (React + TypeScript + Tailwind CSS)
+│ POST /analyze (Image)
+▼
+Hosted on Lovable (Global CDN)
+│
+▼
+Backend (FastAPI – Railway)
+│
+├── Google Vision API (OCR)
+│
+└── Google Gemini AI (Ingredient Analysis)
+│
+▼
+Structured JSON Response
+│
+▼
+Frontend Dashboard (Scores & Charts)
 
 ---
 
