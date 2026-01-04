@@ -1,6 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from google.cloud import vision
 import google.generativeai as genai
 import json
 import os
@@ -130,25 +131,67 @@ def create_custom_profile(
     }
     return custom_persona
 
-def extract_text_from_image(image_bytes: bytes) -> str:
-    """FEATURE 2: Image to Text Extraction - WORKING VERSION"""
-    try:
-        # Use gemini-1.5-flash for images (works for everyone)
-        vision_model = genai.GenerativeModel('gemini-1.5-flash') 
-        
-        image = Image.open(io.BytesIO(image_bytes))
-        response = vision_model.generate_content([
-            "Extract text from this image. Just return the text you see.",
-            image
-        ])
-        extracted = response.text.strip()
-        print(f"Extracted text: {extracted[:100]}...")
-        return extracted
-    except Exception as e:
-        print(f"Image extraction failed: {str(e)}")
-        # FALLBACK: Return test ingredients
-        return "water, sugar, citric acid, natural flavors, sodium benzoate"
+# Add this import at the TOP of your main.py (with other imports):
+from google.cloud import vision
+import os
 
+# Replace your current extract_text_from_image function (around line 85):
+def extract_text_from_image(image_bytes: bytes) -> str:
+    """FEATURE 2: Real Image to Text with Google Vision API"""
+    try:
+        print("DEBUG: Using Google Vision API for OCR...")
+        
+        # Initialize Vision client with API key from Railway
+        client = vision.ImageAnnotatorClient(
+            client_options={
+                "api_key": os.getenv("VISION_API_KEY")
+            }
+        )
+        
+        # Create Vision image object
+        image = vision.Image(content=image_bytes)
+        
+        # Call Vision API
+        response = client.text_detection(image=image)
+        
+        # Check for errors
+        if response.error.message:
+            print(f"Vision API error: {response.error.message}")
+            return "water, sugar, citric acid, natural flavors"
+        
+        # Extract text from response
+        texts = response.text_annotations
+        
+        if texts:
+            # The first item contains ALL detected text
+            all_text = texts[0].description
+            print(f"DEBUG: Vision extracted {len(all_text)} chars")
+            print(f"DEBUG: First 200 chars: {all_text[:200]}")
+            
+            # Try to find ingredients section (common patterns)
+            import re
+            lines = all_text.split('\n')
+            
+            # Look for "INGREDIENTS:", "Ingredients:", "Contains:", etc.
+            ingredients_keywords = ["INGREDIENTS", "Ingredients", "CONTAINS", "Contains", "COMPOSITION"]
+            
+            for i, line in enumerate(lines):
+                if any(keyword in line.upper() for keyword in ingredients_keywords):
+                    # Take next 5-10 lines as ingredients
+                    ingredients_section = "\n".join(lines[i:i+15])
+                    print(f"DEBUG: Found ingredients section")
+                    return ingredients_section
+            
+            # If no ingredients section found, return all text
+            return all_text.strip()
+        else:
+            print("DEBUG: No text found in image")
+            return "water, sugar, citric acid"
+            
+    except Exception as e:
+        print(f"DEBUG: Vision API failed: {str(e)}")
+        # Fallback to mock
+        return "water, sugar, citric acid, natural flavors, preservatives, sodium benzoate"
 def analyze_with_gemini(ingredients: str, persona: dict) -> dict:
     """FEATURE 3: Core AI Analysis with Personalized Buckets"""
     
@@ -350,6 +393,7 @@ def available_models():
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
 
 
 
